@@ -5,14 +5,12 @@ from scipy.stats import linregress
 # Load the image
 image = cv2.imread('../wisconsin-autonomous-coding-challenge/red.png')
 answer = image.copy()
+bounding_boxes = []
+left_side_coordinates = []
+right_side_coordinates = []
 
-
-# Check if the image was loaded successfully
-if image is None:
-    print("Failed to load image.")
-else:
+def mask_red():
     hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-
     # Define the lower and upper bounds for red in Hue Saturation and Value
     #define the higher and lower bounds to capture brighter red colors
     lower_red1 = np.array([0, 170, 180])
@@ -27,12 +25,10 @@ else:
 
     #Combine the two masks
     mask = cv2.bitwise_or(red_mask_1, red_mask_2)
-
+    return mask
+def generate_contours(mask):
     # Draw bounding rectangles around the red areas
     contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    bounding_boxes = []
-    left_side_coordinates = []
-    right_side_coordinates = []
 
     # Save the red areas with significant size
     for contour in contours:
@@ -47,7 +43,7 @@ else:
                 left_side_coordinates.append((center_x, center_y))
             else:
                 right_side_coordinates.append((center_x, center_y))
-
+def draw_lines():
     # Draw the red guidelines
     zipped_left_x, zipped_left_y = zip(*left_side_coordinates)
     zipped_right_x, zipped_right_y, = zip(*right_side_coordinates)
@@ -58,9 +54,19 @@ else:
     cv2.line(answer, (left_side_coordinates[0][0], int(left_side_coordinates[0][0]*left_slope + left_intercept)), (left_side_coordinates[-1][0], int(left_side_coordinates[-1][0] * left_slope + left_intercept)), (0, 0, 255), 4)
     cv2.line(answer, (right_side_coordinates[0][0], int(right_side_coordinates[0][0] * right_slope + right_intercept)), (right_side_coordinates[-1][0], int(right_side_coordinates[-1][0] * right_slope + right_intercept)), (0, 0, 255), 4)
 
-    # Display the result
-    cv2.imshow('Red Guidelines', answer)
-    cv2.imwrite('../wisconsin-autonomous-coding-challenge/answer.png', answer)
-    cv2.waitKey(0)
-    cv2.destroyAllWindows()
+#driver code
+if __name__ == "__main__":
+    # Check if the image was loaded successfully
+    if image is None:
+        print("Failed to load image.")
+    else:
+        generate_contours(mask_red())
+        draw_lines()
+        # Display the result
+        cv2.imshow('Red Guidelines', answer)
+        cv2.imwrite('../wisconsin-autonomous-coding-challenge/answer.png', answer)
 
+        # press any key to close the image and stop the program
+        cv2.waitKey(0)
+        cv2.destroyAllWindows()
+        print("Program has ended.")
